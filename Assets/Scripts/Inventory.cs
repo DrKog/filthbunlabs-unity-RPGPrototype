@@ -2,30 +2,48 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Inventory : MonoBehaviour
+public class Inventory
 {
-    private Dictionary<String, int> items = new Dictionary<String, int>();
-    [SerializeField] private UIController canvas;
 
-    public void AddItem(PickUpObject item)
+    public event EventHandler OnItemListChabge;
+    
+    private List<Item> _items;
+
+    public Inventory()
     {
-        if (items.ContainsKey(item.gameObject.name))
+        _items = new List<Item>();
+        
+        Debug.Log(_items.Count);
+    }
+
+    public void AddItem(Item item)
+    {
+        if (item.isStackable())
         {
-            // Item of the same type already exists, so increment its quantity
-            items[item.gameObject.name]++;
+            bool itemInInventory = false;
+            foreach (Item inInventory in _items)
+            {
+                if (item.itemTyoe == inInventory.itemTyoe)
+                {
+                    inInventory.amount += item.amount;
+                    itemInInventory = true;
+                }
+            }
+            if (!itemInInventory)
+            {
+                _items.Add(item);
+            }
         }
         else
         {
-            // Item does not exist in inventory, add it with quantity 1
-            items.Add(item.gameObject.name, 1);
+            _items.Add(item);
         }
-        item.gameObject.SetActive(false);
-
-        canvas.UpdateInventoryText();
+        
+        OnItemListChabge?.Invoke(this, EventArgs.Empty);
     }
-    
-    public Dictionary<String, int> GetItems()
+
+    public List<Item> GetItemList()
     {
-        return items;
+        return _items;
     }
 }
